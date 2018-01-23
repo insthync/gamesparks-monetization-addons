@@ -32,15 +32,21 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
 
 
         new AccountDetailsRequest().Send((response) => {
-            var currencies = response.Currencies.BaseData;
-            foreach (var currency in currencies)
+            if (!response.HasErrors)
             {
-                CurrencyAmounts[currency.Key] = System.Convert.ToInt32(currency.Value);
-            }
-            if (response.ScriptData.ContainsKey("purchasedItems"))
-            {
-                Items.itemNames.Clear();
-                Items.itemNames.AddRange(response.ScriptData.GetStringList("purchasedItems"));
+                if (response.Currencies != null)
+                {
+                    var currencies = response.Currencies.BaseData;
+                    foreach (var currency in currencies)
+                    {
+                        CurrencyAmounts[currency.Key] = System.Convert.ToInt32(currency.Value);
+                    }
+                }
+                if (response.ScriptData != null && response.ScriptData.ContainsKey("purchasedItems"))
+                {
+                    Items.itemNames.Clear();
+                    Items.itemNames.AddRange(response.ScriptData.GetStringList("purchasedItems"));
+                }
             }
             IsRequestedDataOnce = true;
             IsRequestingCurrencyService = false;
@@ -69,7 +75,9 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
 
     public override int GetCurrency(string name)
     {
-        return CurrencyAmounts[name];
+        if (CurrencyAmounts.ContainsKey(name))
+            return CurrencyAmounts[name];
+        return 0;
     }
 
     public override PurchasedItems GetPurchasedItems()
