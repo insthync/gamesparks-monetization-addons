@@ -30,24 +30,13 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
         if (IsRequestingCurrencyService)
             return;
         IsRequestingCurrencyService = true;
-
-        var currencyKeys = new List<string>(MonetizationManager.Currencies.Keys);
-        var currencyAmounts = new int[6];
+        
         new AccountDetailsRequest().Send((response) => {
-
-            currencyAmounts[0] = (int)response.Currency1;
-            currencyAmounts[1] = (int)response.Currency2;
-            currencyAmounts[2] = (int)response.Currency3;
-            currencyAmounts[3] = (int)response.Currency4;
-            currencyAmounts[4] = (int)response.Currency5;
-            currencyAmounts[5] = (int)response.Currency6;
-            var i = 0;
-            while (i < currencyKeys.Count && i < 6)
+            var currencies = response.Currencies.BaseData;
+            foreach (var currency in currencies)
             {
-                CurrencyAmounts[currencyKeys[i]] = currencyAmounts[i];
-                ++i;
+                CurrencyAmounts[currency.Key] = System.Convert.ToInt32(currency.Value);
             }
-
             IsRequestedCurrencyOnce = true;
             IsRequestingCurrencyService = false;
         });
@@ -111,7 +100,7 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
         IsRequestingCurrencyService = true;
 
         var keys = new List<string>(CurrencyAmounts.Keys);
-        var json = string.Format("{ \"currencyIndex\" : \"{0}\", \"currencyAmount\" : \"{1}\" }", keys.IndexOf(name), amount);
+        var json = string.Format("{ \"currencyId\" : \"{0}\", \"currencyAmount\" : \"{1}\" }", name, amount);
         new LogEventRequest().SetEventKey("SERVICE_EVENT")
             .SetEventAttribute("TARGET", "setCurrency")
             .SetEventAttribute("DATA", new GSRequestData(json))
