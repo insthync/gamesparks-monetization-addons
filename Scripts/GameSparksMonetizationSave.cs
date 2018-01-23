@@ -12,14 +12,12 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
 {
     public static readonly Dictionary<string, int> CurrencyAmounts = new Dictionary<string, int>();
     public static PurchasedItems Items = new PurchasedItems();
-    public static bool IsRequestedCurrencyOnce { get; private set; }
-    public static bool IsRequestedItemsOnce { get; private set; }
+    public static bool IsRequestedDataOnce { get; private set; }
     public static bool IsRequestingCurrencyService { get; private set; }
     public static bool IsRequestingItemsService { get; private set; }
     private void Awake()
     {
-        IsRequestedCurrencyOnce = false;
-        IsRequestedItemsOnce = false;
+        IsRequestedDataOnce = false;
         IsRequestingCurrencyService = false;
         IsRequestingItemsService = false;
         RequestCurrencyData();
@@ -27,35 +25,27 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
 
     public void RequestCurrencyData()
     {
-        if (IsRequestingCurrencyService)
+        if (IsRequestingCurrencyService || IsRequestingItemsService)
             return;
         IsRequestingCurrencyService = true;
-        
+        IsRequestingItemsService = true;
+
+
         new AccountDetailsRequest().Send((response) => {
             var currencies = response.Currencies.BaseData;
             foreach (var currency in currencies)
             {
                 CurrencyAmounts[currency.Key] = System.Convert.ToInt32(currency.Value);
             }
-            IsRequestedCurrencyOnce = true;
-            IsRequestingCurrencyService = false;
-        });
-    }
-
-    public void RequestItemData()
-    {
-        if (IsRequestingItemsService)
-            return;
-        IsRequestingItemsService = true;
-
-        var keys = new List<string>(CurrencyAmounts.Keys);
-        new LogEventRequest().SetEventKey("SERVICE_EVENT")
-            .SetEventAttribute("TARGET", "getPurchasedItems")
-            .Send((response) =>
+            if (response.ScriptData.ContainsKey("purchasedItems"))
             {
-                IsRequestedItemsOnce = true;
-                IsRequestingItemsService = false;
-            });
+                Items.itemNames.Clear();
+                Items.itemNames.AddRange(response.ScriptData.GetStringList("purchasedItems"));
+            }
+            IsRequestedDataOnce = true;
+            IsRequestingCurrencyService = false;
+            IsRequestingItemsService = false;
+        });
     }
 
     public override bool AddCurrency(string name, int amount)
@@ -89,7 +79,7 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
 
     public override void SetCurrency(string name, int amount)
     {
-        if (!IsRequestedCurrencyOnce)
+        if (!IsRequestedDataOnce)
             return;
 
         if (!CurrencyAmounts.ContainsKey(name) || CurrencyAmounts[name] == amount)
@@ -115,7 +105,7 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
 
     public override void SetPurchasedItems(PurchasedItems purchasedItems)
     {
-        if (!IsRequestedItemsOnce)
+        if (!IsRequestedDataOnce)
             return;
 
         if (purchasedItems == null)
