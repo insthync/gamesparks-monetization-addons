@@ -96,8 +96,7 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
         if (IsRequestingCurrencyService)
             return;
         IsRequestingCurrencyService = true;
-
-        var keys = new List<string>(CurrencyAmounts.Keys);
+        
         var json = string.Format("{ \"currencyId\" : \"{0}\", \"currencyAmount\" : \"{1}\" }", name, amount);
         new LogEventRequest().SetEventKey("SERVICE_EVENT")
             .SetEventAttribute("TARGET", "setCurrency")
@@ -133,7 +132,7 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
         var json = string.Format("{ \"items\" : [{0}] }", items);
         new LogEventRequest().SetEventKey("SERVICE_EVENT")
             .SetEventAttribute("TARGET", "setPurchasedItems")
-            .SetEventAttribute("DATA", new GSRequestData(items))
+            .SetEventAttribute("DATA", new GSRequestData(json))
             .Send((response) =>
             {
                 if (!response.HasErrors)
