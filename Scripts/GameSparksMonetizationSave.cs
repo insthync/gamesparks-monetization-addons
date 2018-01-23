@@ -70,10 +70,10 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
     public override void SetCurrency(string name, int amount)
     {
         var keys = new List<string>(CurrencyAmounts.Keys);
+        var json = "{ \"currencyIndex\" : \"" + keys.IndexOf(name) + "\", \"currencyAmount\" : \"" + amount + "\" }";
         new LogEventRequest().SetEventKey("SERVICE_EVENT")
-            .SetEventAttribute("target", "setCurrency")
-            .SetEventAttribute("currencyIndex", keys.IndexOf(name))
-            .SetEventAttribute("currencyAmount", amount)
+            .SetEventAttribute("TARGET", "setCurrency")
+            .SetEventAttribute("DATA", json)
             .Send((response) =>
             {
                 if (!response.HasErrors)
@@ -94,9 +94,10 @@ public class GameSparksMonetizationSave : BaseMonetizationSave
             json += "\"" + itemName + "\"";
         }
         json += "]";
+        json = "{ \"items\" : " + json + " }";
         new LogEventRequest().SetEventKey("SERVICE_EVENT")
-            .SetEventAttribute("target", "setPurchasedItems")
-            .SetEventAttribute("items", json)
+            .SetEventAttribute("TARGET", "setPurchasedItems")
+            .SetEventAttribute("DATA", json)
             .Send((response) =>
             {
                 if (!response.HasErrors)
